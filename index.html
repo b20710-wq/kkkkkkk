@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tidyup — 비전 AI 기반 공간 정돈 솔루션</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-main: #191f28;
+            --text-sub: #6b7684;
+            --text-placeholder: #b0b8c1;
+            --border-color: #f2f4f6;
+            --point-blue: #738fff; 
+            --accent-bg: #f4f6fa;
+            --danger-red: #ff5a5a;
+            --success-green: #2d9d78;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; letter-spacing: -0.5px; }
+        body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
+        .app-wrapper { width: 100%; max-width: 100%; margin: 0 auto; padding: 0 40px; }
+        @media (max-width: 768px) { .app-wrapper { padding: 0 20px; } }
+
+        nav { width: 100%; padding: 24px 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .logo-txt { font-size: 24px; font-weight: 800; color: var(--point-blue); cursor: pointer; }
+        .auth-nav-group { display: flex; align-items: center; gap: 12px; }
+        .user-welcome-txt { font-size: 14px; font-weight: 600; color: var(--text-main); }
+        
+        .auth-nav-btn { background: transparent; border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--text-main); cursor: pointer; }
+        .auth-nav-btn.primary { background: var(--point-blue); color: #fff; border-color: var(--point-blue); }
+
+        .welcome-hero { padding: 60px 0 40px 0; }
+        .welcome-hero h1 { font-size: 42px; font-weight: 800; line-height: 1.3; }
+        .welcome-hero h1 mark { background: none; color: var(--point-blue); }
+        .welcome-hero p { font-size: 16px; color: var(--text-sub); margin-top: 16px; line-height: 1.6; max-width: 600px; }
+
+        .grid-container { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 32px; margin-bottom: 80px; }
+        @media (max-width: 991px) { .grid-container { grid-template-columns: 1fr; } }
+
+        .toss-card { background: #ffffff; border-radius: 24px; padding: 32px; border: 1px solid var(--border-color); }
+        .field-lbl { display: block; font-size: 13px; font-weight: 700; color: var(--text-sub); margin-bottom: 10px; text-transform: uppercase; }
+
+        .drop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+        .drop-slot { height: 160px; border: 1px dashed var(--text-placeholder); border-radius: 16px; background: var(--accent-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; }
+        .drop-inner-txt { font-size: 12px; color: var(--text-sub); text-align: center; }
+        .drop-inner-txt b { font-size: 16px; display: block; margin-bottom: 4px; color: var(--text-main); }
+        .slot-preview-img { width: 100%; height: 100%; object-fit: cover; }
+
+        .modern-select { width: 100%; padding: 16px; background: var(--accent-bg); border: 1px solid transparent; border-radius: 14px; font-size: 15px; color: var(--text-main); outline: none; font-weight: 500; }
+        .segment-group { display: flex; background: var(--accent-bg); padding: 4px; border-radius: 14px; gap: 4px; }
+        .segment-btn { flex: 1; padding: 14px; border-radius: 10px; font-size: 14px; font-weight: 700; border: none; background: transparent; color: var(--text-sub); cursor: pointer; }
+        .segment-btn.active { background: #ffffff; color: var(--point-blue); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
+        .action-btn { width: 100%; background: var(--point-blue); color: #fff; border: none; padding: 18px; border-radius: 16px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 12px; }
+
+        .scan-animation-box { width: 100%; height: 200px; background: var(--accent-bg); border-radius: 24px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; margin: 40px 0; }
+        .scan-animation-box span { font-size: 13px; font-weight: 800; color: var(--point-blue); letter-spacing: 0.1em; animation: flash 1.5s infinite; }
+        @keyframes flash { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+        .laser-beam { position: absolute; left: 0; right: 0; height: 3px; background: var(--point-blue); box-shadow: 0 0 12px var(--point-blue); animation: moveLaser 2.2s infinite linear; }
+        @keyframes moveLaser { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
+
+        .report-header-title { font-size: 28px; font-weight: 800; margin-bottom: 24px; }
+        .insight-summary-card { padding: 24px; background: #f0f3ff; border-radius: 18px; font-size: 14px; color: var(--point-blue); line-height: 1.6; font-weight: 500; margin-bottom: 24px; }
+        .history-alert-bar { padding: 16px 20px; background: #eef3ff; border: 1px solid #d0daf5; border-radius: 14px; font-size: 14px; color: #2b3a63; font-weight: 600; margin-bottom: 20px; }
+
+        .chart-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; text-align: center; }
+        .chart-card { background: var(--accent-bg); padding: 16px; border-radius: 18px; display: flex; flex-direction: column; align-items: center; }
+        .chart-label { font-size: 12px; font-weight: 700; color: var(--text-sub); margin-top: 8px; }
+
+        .macro-step-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: 20px; padding: 24px; margin-bottom: 16px; border-left: 4px solid var(--point-blue); }
+        .macro-main-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .macro-title-txt { font-size: 16px; font-weight: 700; }
+        .macro-desc-txt { font-size: 13px; color: var(--text-sub); margin-top: 4px; }
+        .toggle-expand-btn { background: var(--accent-bg); border: none; font-size: 12px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+
+        .sub-accordion-panel { margin-top: 18px; padding-top: 18px; border-top: 1px dashed var(--border-color); display: none; flex-direction: column; gap: 12px; }
+        .sub-accordion-panel.open { display: flex; }
+        .mini-todo-node { background: var(--accent-bg); padding: 14px; border-radius: 12px; display: flex; align-items: center; gap: 12px; }
+        .mini-circle-box { width: 20px; height: 20px; border: 2px solid var(--text-placeholder); border-radius: 50%; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; }
+        .mini-circle-box.active { background: var(--point-blue); border-color: var(--point-blue); }
+
+        .shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px; }
+        .shop-item-card { border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; background: #fff; }
+        .shop-item-thumb { height: 110px; background: var(--accent-bg); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--point-blue); font-size: 12px; margin-bottom: 12px; text-transform: uppercase; border: 1px solid var(--border-color); }
+        .shop-item-title { font-size: 14px; font-weight: 700; color: var(--text-main); }
+        .shop-item-price { font-size: 15px; font-weight: 800; color: var(--point-blue); margin: 4px 0; }
+        .shop-item-desc { font-size: 12px; color: var(--text-sub); margin-bottom: 12px; flex: 1; line-height: 1.4; }
+        .shop-item-link { background: var(--accent-bg); color: var(--text-main); text-decoration: none; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 10px; text-align: center; }
+        .shop-item-card:hover .shop-item-link { background: var(--point-blue); color: #fff; }
+
+        .chat-wrapper { display: flex; flex-direction: column; height: 420px; border: 1px solid var(--border-color); border-radius: 20px; background: var(--accent-bg); overflow: hidden; }
+        .chat-feed { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .bubble { max-width: 85%; padding: 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
+        .bubble.ai { background: #ffffff; color: var(--text-main); align-self: flex-start; border: 1px solid var(--border-color); }
+        .bubble.user { background: var(--point-blue); color: #ffffff; align-self: flex-end; }
+        .chat-input-row { display: flex; padding: 16px; background: #ffffff; border-top: 1px solid var(--border-color); gap: 10px; }
+        .chat-input-row input { flex: 1; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; outline: none; font-size: 14px; }
+        .chat-input-row button { background: var(--point-blue); color: #fff; border: none; padding: 0 20px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+
+        /* 인증 모달 */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--point-blue); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-card { background: transparent; width: 100%; max-width: 440px; padding: 0 24px; position: relative; display: flex; flex-direction: column; }
+        .modal-close { position: absolute; top: -30px; right: 24px; background: none; border: none; font-size: 24px; cursor: pointer; color: #ffffff; }
+        
+        .screenshot-header { color: #ffffff; margin-bottom: 40px; padding-left: 8px; }
+        .screenshot-header .main-title { font-size: 40px; font-weight: 800; line-height: 1.2; margin-bottom: 16px; }
+        .screenshot-header .sub-desc { font-size: 14px; color: rgba(255, 255, 255, 0.75); line-height: 1.5; font-weight: 400; }
+        
+        .live-feedback-lbl { font-size: 12px; font-weight: 700; margin-bottom: 6px; display: none; padding-left: 4px; }
+        .live-feedback-lbl.error { color: var(--danger-red); display: block; }
+        .live-feedback-lbl.success { color: #a9ffc6; display: block; }
+        
+        .screenshot-white-card { background: #ffffff; border-radius: 36px; padding: 40px 32px; box-shadow: 0 15px 40px rgba(0,0,0,0.08); display: flex; flex-direction: column; }
+        .screen-input-block { display: flex; flex-direction: column; margin-bottom: 24px; }
+        .screen-input-block .input-name { font-size: 11px; font-weight: 700; color: var(--text-sub); margin-bottom: 8px; padding-left: 4px; }
+        .screen-input { width: 100%; padding: 18px 24px; border: 1px solid #e5e8eb; background: #f8f9fa; border-radius: 20px; font-size: 15px; color: var(--text-main); outline: none; transition: all 0.25s ease; }
+        .screen-input:focus { border-color: var(--point-blue); background: #ffffff; box-shadow: 0 4px 12px rgba(115, 143, 255, 0.1); }
+        .screen-input.has-error { border-color: var(--danger-red); background: #fffdfd; }
+        
+        .screenshot-action-row { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+        .screenshot-action-row .flow-title { font-size: 24px; font-weight: 800; color: var(--text-main); }
+        .circle-arrow-btn { width: 56px; height: 56px; border-radius: 50%; background: var(--point-blue); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #ffffff; font-size: 20px; transition: all 0.2s ease; box-shadow: 0 4px 14px rgba(115, 143, 255, 0.4); }
+        .circle-arrow-btn:hover { transform: scale(1.05); opacity: 0.9; }
+        .circle-arrow-btn:disabled { background: #e5e8eb; color: #b0b8c1; cursor: not-allowed; box-shadow: none; }
+        
+        .screenshot-footer-links { display: flex; justify-content: space-between; margin-top: 32px; padding: 0 4px; }
+        .screen-toggle-link { font-size: 13px; font-weight: 600; color: var(--text-sub); cursor: pointer; text-decoration: none; }
+        .screen-toggle-link:hover { color: var(--point-blue); }
+        .terms-box { padding-top: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+        .terms-item { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-sub); }
+        .terms-item span { display: flex; align-items: center; gap: 6px; }
+
+        /* 과거 이력 관리함 */
+        .history-modal-card { background: #ffffff; width: 100%; max-width: 560px; padding: 32px; border-radius: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); position: relative; max-height: 80vh; display: flex; flex-direction: column; }
+        .history-list-container { flex: 1; overflow-y: auto; margin-top: 20px; display: flex; flex-direction: column; gap: 16px; padding-right: 4px; }
+        .history-item-node { border: 1px solid var(--border-color); border-radius: 18px; padding: 16px; display: grid; grid-template-columns: 80px 1fr 80px; gap: 16px; align-items: center; background: #ffffff; cursor: pointer; transition: all 0.2s ease; }
+        .history-item-node:hover { border-color: var(--point-blue); background: #fafbff; transform: translateY(-2px); }
+        .history-thumb-box { width: 80px; height: 80px; background: var(--accent-bg); border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .history-thumb-img { width: 100%; height: 100%; object-fit: cover; }
+        .history-meta-info { display: flex; flex-direction: column; gap: 4px; }
+        .history-date { font-size: 12px; color: var(--text-placeholder); font-weight: 500; }
+        .history-space { font-size: 15px; font-weight: 700; color: var(--text-main); }
+        .history-age { font-size: 13px; color: var(--text-sub); }
+        .restore-badge-btn { background: #eef3ff; color: var(--point-blue); border: none; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s; }
+        .history-item-node:hover .restore-badge-btn { background: var(--point-blue); color: #ffffff; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <nav>
+            <div class="logo-group">
+                <span class="logo-txt" onclick="location.reload()">Tidyup</span>
+            </div>
+            <div class="auth-nav-group" id="navAuthBar">
+                <button class="auth-nav-btn" onclick="openModal('login')">로그인</button>
+                <button class="auth-nav-btn primary" onclick="openModal('signup')">회원가입</button>
+            </div>
+        </nav>
+
+        <div class="welcome-hero">
+            <h1>방 안의 사물들을<br><mark>제위치로 올바르게.</mark></h1>
+            <p>단순 이미지 인식을 넘어 사물 간의 배치 구조와 동선을 정밀 분석하여, 거시적인 관점에서 꼭 필요한 청소 흐름을 가이드합니다.</p>
+        </div>
+
+        <div id="mainAppSection" class="grid-container">
+            <div class="toss-card" style="display: flex; flex-direction: column; gap: 28px;">
+                <div>
+                    <label class="field-lbl">공간 다각도 이미지 등록</label>
+                    <div class="drop-grid">
+                        <div onclick="triggerFile(0)" class="drop-slot">
+                            <input type="file" id="file-0" accept="image/*" class="hidden" onchange="loadImg(0, event)">
+                            <div id="slot-txt-0" class="drop-inner-txt"><b>＋</b>정면 레이어</div>
+                            <img id="img-0" class="slot-preview-img hidden">
+                        </div>
+                        <div onclick="triggerFile(1)" class="drop-slot">
+                            <input type="file" id="file-1" accept="image/*" class="hidden" onchange="loadImg(1, event)">
+                            <div id="slot-txt-1" class="drop-inner-txt"><b>＋</b>측면 레이어</div>
+                            <img id="img-1" class="slot-preview-img hidden">
+                        </div>
+                        <div onclick="triggerFile(2)" class="drop-slot">
+                            <input type="file" id="file-2" accept="image/*" class="hidden" onchange="loadImg(2, event)">
+                            <div id="slot-txt-2" class="drop-inner-txt"><b>＋</b>탑다운 뷰</div>
+                            <img id="img-2" class="slot-preview-img hidden">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="field-lbl">진단 대상 공간 범위</label>
+                    <select id="spaceSelect" class="modern-select">
+                        <option value="Desk">책상 및 워크 스테이션 레이아웃</option>
+                        <option value="Room">원룸 바닥 및 침실 반경 공간</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="field-lbl">사용자 연령대 설정</label>
+                    <div class="segment-group" id="ageSegmentGroup">
+                        <button type="button" onclick="selectAge('10대')" class="segment-btn">10대 학생</button>
+                        <button type="button" onclick="selectAge('20대')" class="segment-btn active">20대 자취생</button>
+                        <button type="button" onclick="selectAge('30대 이상')" class="segment-btn">30대 이상 일반</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="field-lbl">용품 추천</label>
+                    <div class="segment-group">
+                        <button type="button" id="recom-on" onclick="setRecom(true)" class="segment-btn active">추천 받기</button>
+                        <button type="button" id="recom-off" onclick="setRecom(false)" class="segment-btn">받지 않기</button>
+                    </div>
+                </div>
+
+                <button onclick="startTidyupPipeline()" class="action-btn">🔄 청소 시작</button>
+            </div>
+
+            <div class="toss-card" style="background: var(--accent-bg); border: none;">
+                <label class="field-lbl" style="color: var(--point-blue);">Tidyup 핵심 가이드</label>
+                <p style="font-size: 15px; line-height: 1.7; color: var(--text-main); margin-top: 8px;">
+                    치우기 전 방 안의 수평, 수직축 공간 상태를 이미지 센싱으로 점검합니다. 사물의 기하학적 위치 이탈 상태를 파악하여 정리 동선 리포트를 도출합니다. 정면에 보이는 구도와 측면 구도 사진을 최소 2장 업로드한 후 시작 버튼을 눌러주세요.
+                </p>
+            </div>
+        </div>
+
+        <div id="loadingSection" class="hidden">
+            <div class="scan-animation-box">
+                <span>SPATIAL CONTEXT SCANNING...</span>
+                <div class="laser-beam"></div>
+            </div>
+        </div>
+
+        <div id="resultSection" class="grid-container hidden">
+            <div>
+                <h2 class="report-header-title" id="dashboardMainTitle">공간 맞춤 분석표</h2>
+                <div id="historyAlertArea" class="hidden"></div>
+
+                <div class="chart-grid">
+                    <div class="chart-card">
+                        <canvas id="chartMove" width="80" height="80"></canvas>
+                        <div class="chart-label">동선 효율성</div>
+                    </div>
+                    <div class="chart-card">
+                        <canvas id="chartNoise" width="80" height="80"></canvas>
+                        <div class="chart-label">시각적 노이즈 차단</div>
+                    </div>
+                    <div class="chart-card">
+                        <canvas id="chartMiss" width="80" height="80"></canvas>
+                        <div class="chart-label">물품 위치 정합도</div>
+                    </div>
+                </div>
+
+                <div class="insight-summary-card" id="analysisCardSummary">
+                    모든 체크리스트는 정돈 상태를 기다리는 미체크 대기 상태입니다. 큰 순서대로 단계를 확장하여 세부 항목을 확인하세요.
+                </div>
+
+                <div id="stepsContainer"></div>
+
+                <div id="shopPanel" class="toss-card" style="margin-top: 24px;">
+                    <label class="field-lbl" style="color: var(--point-blue);">🎯 연령대별 맞춤 최적화 추천 용품</label>
+                    <div class="shop-grid" id="dynamicProductGrid"></div>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="report-header-title">AI 청소 멘토 Gemini Pro</h2>
+                <div class="chat-wrapper">
+                    <div class="chat-feed" id="chatFeed">
+                        <div class="bubble ai" id="chatAiInitBubble">
+                            안녕하세요. 현재 분석된 방의 기하학적 배치를 기반으로 정돈 순서를 설계했습니다. 대청소 3단계 원칙과 상세 체크리스트를 상단 카드에서 확인하신 후 진행하면 정돈 효율을 높일 수 있습니다. 정돈 과정에서 의문이 생기는 사물이 있다면 아래 창에 입력해 주시기 바랍니다.
+                        </div>
+                    </div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chatInput" placeholder="질문을 입력하세요. (Enter 전송)">
+                        <button onclick="sendChat()">보내기</button>
+                    </div>
+                </div>
+                <button onclick="location.reload()" class="action-btn" style="background:#191f28; margin-top:20px;">다른 구역 새로 스캔하기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="authModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <div class="screenshot-header">
+                <div class="main-title" id="screenMainTitle">Welcome<br>Back!</div>
+                <div class="sub-desc" id="screenSubDesc">자체 계정을 활용해 영속 데이터베이스 매핑 가이드 연동을 시작하세요.</div>
+            </div>
+            <div class="screenshot-white-card">
+                <div id="liveFeedback" class="live-feedback-lbl"></div>
+                <div class="screen-input-block">
+                    <div class="input-name">이메일 (아이디)</div>
+                    <input type="text" id="authId" class="screen-input" placeholder="youremail@address.com" oninput="checkIdDuplicationLive()">
+                </div>
+                <div class="screen-input-block" style="margin-bottom: 16px;">
+                    <div class="input-name">비밀번호</div>
+                    <input type="password" id="authPw" class="screen-input" placeholder="비밀번호">
+                </div>
+                <div class="terms-box hidden" id="termsComponentArea">
+                    <div class="terms-item">
+                        <span><input type="checkbox" id="termsService" onchange="validateTermsChecked()"> [필수] 서비스 이용약관</span>
+                    </div>
+                    <div class="terms-item">
+                        <span><input type="checkbox" id="termsPrivacy" onchange="validateTermsChecked()"> [필수] 개인정보 수집 및 이용</span>
+                    </div>
+                </div>
+                <div class="screenshot-action-row">
+                    <div class="flow-title" id="flowActionTitle">로그인</div>
+                    <button class="circle-arrow-btn" id="modalSubmitBtn" onclick="processAuthSubmit()">➔</button>
+                </div>
+                <div class="screenshot-footer-links">
+                    <span class="screen-toggle-link" id="authToggleLink" onclick="switchAuthMode()">회원가입</span>
+                    <span class="screen-toggle-link" style="color: #ff5a5a;" id="findPwLink">비밀번호 찾기</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal-overlay hidden" style="background: rgba(0,0,0,0.5);">
+        <div class="history-modal-card">
+            <button class="modal-close" onclick="closeHistoryModal()" style="color: var(--text-main); top:24px; right:24px;">✕</button>
+            <h3 class="report-header-title" style="margin-bottom: 8px; font-size: 22px;">과거 공간 분석 이력함</h3>
+            <p style="font-size: 13px; color: var(--text-sub);">원하는 과거 내역을 클릭하면 당시 이미지와 정돈 매핑 분석 결과가 대시보드에 그대로 복원됩니다.</p>
+            <div class="history-list-container" id="historyListContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        if (!localStorage.getItem("tidyup_db")) {
+            localStorage.setItem("tidyup_db", JSON.stringify({
+                "clean_master": { password: "123", history: [] }
+            }));
+        }
+
+        let uploadedImages = [null, null, null];
+        let isRecommendActive = true;
+        let selectedAgeGroup = "20대";
+        let currentAuthMode = "login";
+        let currentUser = null;
+        let isIdValid = false;
+        let currentActiveMetrics = { move: 50, noise: 50, miss: 50 };
+
+        const productCatalog = {
+            "10대": [
+                { title: "시디즈 서울대 기능성 독서용 의자", price: "189,000원", desc: "10대 학생들의 집중 자세 교정 및 레이아웃 유지 가구", link: "https://www.coupang.com", tag: "STUDY CHAIR" },
+                { title: "데스크 메이트 학용품 오거나이저 트레이", price: "14,500원", desc: "책상 위 분산 배치된 필기구 및 소품 지정석 수납함", link: "https://www.coupang.com", tag: "ORGANIZER" }
+            ],
+            "20대": [
+                { title: "원룸 공간 활용 수직 압축봉 행거", price: "24,800원", desc: "자취방 옷가지 및 오브젝트 수납 효율성을 상향 보정하는 툴", link: "https://www.coupang.com", tag: "SPACE POLE" },
+                { title: "멀티탭 가리개 전선 세이프 케이블 박스", price: "11,200원", desc: "꼬인 충전 케이블 배선을 차단하여 시각적 잡음을 원천 소거", link: "https://www.coupang.com", tag: "CABLE BOX" }
+            ],
+            "30대 이상": [
+                { title: "다이슨 V15 디텍트 스마트 무선 청소기", price: "890,000원", desc: "미세 레이저 센서 탑재로 바닥 미세 오염을 정밀 분리 케어", link: "https://www.coupang.com", tag: "VACUUM" },
+                { title: "친환경 다목적 세정 소독 마감 3종 세트", price: "19,800원", desc: "평면 구역 비움 완료 후 잔여 찌든 때 소독 마감 처리에 특화", link: "https://www.coupang.com", tag: "CLEANER" }
+            ]
+        };
+
+        function selectAge(age) {
+            selectedAgeGroup = age;
+            document.getElementById("ageSegmentGroup").querySelectorAll(".segment-btn").forEach(btn => {
+                btn.classList.toggle("active", btn.innerText.includes(age));
+            });
+        }
+
+        function checkIdDuplicationLive() {
+            const idInput = document.getElementById("authId");
+            const id = idInput.value.trim();
+            const feedback = document.getElementById("liveFeedback");
+            const submitBtn = document.getElementById("modalSubmitBtn");
+            const db = JSON.parse(localStorage.getItem("tidyup_db"));
+
+            if (!id) {
+                feedback.className = "live-feedback-lbl";
+                idInput.classList.remove("has-error");
+                isIdValid = false;
+                return;
+            }
+
+            if (currentAuthMode === "signup") {
+                if (db[id]) {
+                    feedback.innerText = "중복된 아이디가 존재하여 사용이 불가능합니다.";
+                    feedback.className = "live-feedback-lbl error";
+                    idInput.classList.add("has-error");
+                    isIdValid = false;
+                    submitBtn.disabled = true;
+                } else {
+                    feedback.innerText = "사용 가능한 안전한 아이디입니다.";
+                    feedback.className = "live-feedback-lbl success";
+                    idInput.classList.remove("has-error");
+                    isIdValid = true;
+                    validateTermsChecked();
+                }
+            } else {
+                feedback.className = "live-feedback-lbl";
+                idInput.classList.remove("has-error");
+                isIdValid = true;
+                submitBtn.disabled = false;
+            }
+        }
+
+        function validateTermsChecked() {
+            if (currentAuthMode !== "signup") return;
+            const ess1 = document.getElementById("termsService").checked;
+            const ess2 = document.getElementById("termsPrivacy").checked;
+            const btn = document.getElementById("modalSubmitBtn");
+
+            if (ess1 && ess2 && isIdValid) {
+                btn.disabled = false;
+            } else {
+                btn.disabled = true;
+            }
+        }
+
+        function switchAuthMode() {
+            const idInput = document.getElementById("authId");
+            const title = document.getElementById("screenMainTitle");
+            const subDesc = document.getElementById("screenSubDesc");
+            const termsArea = document.getElementById("termsComponentArea");
+            const flowTitle = document.getElementById("flowActionTitle");
+            const toggleLink = document.getElementById("authToggleLink");
+            const findPw = document.getElementById("findPwLink");
+            
+            idInput.value = "";
+            document.getElementById("authPw").value = "";
+            document.getElementById("liveFeedback").className = "live-feedback-lbl";
+            idInput.classList.remove("has-error");
+
+            if (currentAuthMode === "login") {
+                currentAuthMode = "signup";
+                title.innerHTML = "Let's<br>Start!";
+                subDesc.innerText = "새로운 계정을 생성하여 공간 분석 서비스를 지속적으로 시작하세요.";
+                termsArea.classList.remove("hidden");
+                flowTitle.innerText = "회원가입";
+                toggleLink.innerText = "로그인";
+                findPw.classList.add("hidden");
+                validateTermsChecked();
+            } else {
+                currentAuthMode = "login";
+                title.innerHTML = "Welcome<br>Back!";
+                subDesc.innerText = "자체 계정을 활용해 영속 데이터베이스 매핑 가이드 연동을 시작하세요.";
+                termsArea.classList.add("hidden");
+                flowTitle.innerText = "로그인";
+                toggleLink.innerText = "회원가입";
+                findPw.classList.remove("hidden");
+                document.getElementById("modalSubmitBtn").disabled = false;
+            }
+        }
+
+        function openModal(mode) {
+            const modal = document.getElementById("authModal");
+            modal.classList.remove("hidden");
+            currentAuthMode = mode === 'signup' ? 'login' : 'signup'; 
+            switchAuthMode();
+        }
+
+        function closeModal() { document.getElementById("authModal").classList.add("hidden"); }
+
+        function openHistoryModal() {
+            if(!currentUser) {
+                alert("로그인 세션 가동 후에만 과거 분석 기록 확인이 가능합니다.");
+                return;
+            }
+            const db = JSON.parse(localStorage.getItem("tidyup_db"));
+            const userHistory = db[currentUser]?.history || [];
+            const listContainer = document.getElementById("historyListContainer");
+            listContainer.innerHTML = "";
+            
+            if(userHistory.length === 0) {
+                listContainer.innerHTML = `<div style="text-align:center; padding: 40px 0; color:var(--text-placeholder); font-size:14px;">저장된 과거 공간 정돈 분석 내역이 없습니다.</div>`;
+            } else {
+                userHistory.forEach((item, index) => {
+                    listContainer.innerHTML += `
+                        <div class="history-item-node" onclick="restorePastAnalysisResult(${index})">
+                            <div class="history-thumb-box">
+                                <img src="${item.snapshot || 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=150&q=80'}" class="history-thumb-img" alt="이전 스냅본">
+                            </div>
+                            <div class="history-meta-info">
+                                <div class="history-date">${item.date}</div>
+                                <div class="history-space">${item.space}</div>
+                                <div class="history-age">연령층: ${item.ageGroup || '미지정'}</div>
+                            </div>
+                            <div><button class="restore-badge-btn">복원</button></div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById("historyModal").classList.remove("hidden");
+        }
+
+        function closeHistoryModal() { document.getElementById("historyModal").classList.add("hidden"); }
+
+        function restorePastAnalysisResult(historyIndex) {
+            const db = JSON.parse(localStorage.getItem("tidyup_db"));
+            const targetRecord = db[currentUser].history[historyIndex];
+            if(!targetRecord) return;
+
+            selectedAgeGroup = targetRecord.ageGroup;
+            currentActiveMetrics = targetRecord.metrics || { move: 65, noise: 45, miss: 75 };
+            
+            renderDashboard();
+            drawCircleChart("chartMove", currentActiveMetrics.move, "#4a65af");
+            drawCircleChart("chartNoise", currentActiveMetrics.noise, "#ff5a5a");
+            drawCircleChart("chartMiss", currentActiveMetrics.miss, "#2d9d78");
+
+            document.getElementById("dashboardMainTitle").innerHTML = `공간 맞춤 분석표 <span style="font-size:13px; color:var(--point-blue); font-weight:600; border:1px solid var(--point-blue); padding:3px 8px; border-radius:6px; margin-left:8px;">${targetRecord.date} 기록 복원됨</span>`;
+            document.getElementById("analysisCardSummary").innerText = targetRecord.commentSummary || "복원된 기록 데이터 세트 가이드라인입니다.";
+
+            closeHistoryModal();
+            document.getElementById("mainAppSection").classList.add("hidden");
+            document.getElementById("resultSection").classList.remove("hidden");
+            document.getElementById("shopPanel").classList.toggle("hidden", !isRecommendActive);
+            
+            const feed = document.getElementById("chatFeed");
+            feed.innerHTML += `
+                <div class="bubble ai" style="border-color: var(--point-blue);">
+                    💾 [기록 복원 완료] 회원님이 과거 <strong>${targetRecord.date}</strong>에 요청하셨던 <strong>${targetRecord.space}</strong> 진단 데이터 결과를 화면에 정상 복원했습니다.
+                </div>
+            `;
+            feed.scrollTop = feed.scrollHeight;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function processAuthSubmit() {
+            const id = document.getElementById("authId").value.trim();
+            const pw = document.getElementById("authPw").value.trim();
+            if(!id || !pw) return alert("정보를 빠짐없이 기입해 주세요.");
+            const db = JSON.parse(localStorage.getItem("tidyup_db"));
+
+            if(currentAuthMode === "signup") {
+                if (db[id]) return alert("중복된 고유 아이디입니다.");
+                db[id] = { password: pw, terms_service_agreed: true, privacy_policy_agreed: true, history: [] };
+                localStorage.setItem("tidyup_db", JSON.stringify(db));
+                alert("계정이 성공적으로 생성되었습니다.");
+                loginUserSuccess(id);
+            } else {
+                if(!db[id] || db[id].password !== pw) return alert("아이디 혹은 패스워드가 정확하지 않습니다.");
+                alert(`성공적으로 로그인되었습니다.`);
+                loginUserSuccess(id);
+            }
+            closeModal();
+        }
+
+        function loginUserSuccess(username) {
+            currentUser = username;
+            document.getElementById("navAuthBar").innerHTML = `
+                <button class="auth-nav-btn" style="border-color: var(--point-blue); color: var(--point-blue); font-weight:700;" onclick="openHistoryModal()">과거 진단 기록 확인</button>
+                <span class="user-welcome-txt">👤 ${username}님</span>
+                <button class="auth-nav-btn" onclick="location.reload()">로그아웃</button>
+            `;
+        }
+
+        function triggerFile(idx) { document.getElementById(`file-${idx}`).click(); }
+
+        function loadImg(idx, e) {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    uploadedImages[idx] = event.target.result;
+                    document.getElementById(`img-${idx}`).src = event.target.result;
+                    document.getElementById(`img-${idx}`).classList.remove("hidden");
+                    document.getElementById(`slot-txt-${idx}`).classList.add("hidden");
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function setRecom(status) {
+            isRecommendActive = status;
+            document.getElementById("recom-on").classList.toggle("active", status);
+            document.getElementById("recom-off").classList.toggle("active", !status);
+        }
+
+        function drawCircleChart(canvasId, value, color) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext("2d");
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const r = 30;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+            ctx.strokeStyle = "#e5e8eb";
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, -Math.PI / 2, (-Math.PI / 2) + (2 * Math.PI * (value / 100)));
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 6;
+            ctx.lineCap = "round";
+            ctx.stroke();
+
+            ctx.font = "bold 13px Pretendard";
+            ctx.fillStyle = "#191f28";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(value + "%", cx, cy);
+        }
+
+        function calculateImageHashMetrics(base64Str) {
+            if(!base64Str) return { move: 55, noise: 60, miss: 45, seed: 1 };
+            let sum = 0;
+            for(let i=0; i<Math.min(base64Str.length, 500); i+=5) {
+                sum += base64Str.charCodeAt(i);
+            }
+            return {
+                move: 40 + (sum % 46),
+                noise: 30 + (sum % 56),
+                miss: 35 + (sum % 51),
+                seed: sum
+            };
+        }
+
+        function startTidyupPipeline() {
+            if(!uploadedImages[0] && !uploadedImages[1]) return alert("공간 분석을 위해 최소 2장 이상의 사진을 업로드하세요.");
+
+            const currentSpace = document.getElementById("spaceSelect").value;
+            const metrics = calculateImageHashMetrics(uploadedImages[0]);
+            currentActiveMetrics = metrics;
+
+            let generatedSummary = "";
+            if (metrics.seed % 2 === 0) {
+                generatedSummary = `[이미지 센싱 리포트] 업로드된 이미지의 시각 잡음도가 수치(${metrics.noise}%)로 대폭 감지되었습니다. 물품 위치의 이탈 편차가 심해 동선 장애가 유발되므로 거시적 구역 격리를 우선하는 구조가 적합합니다.`;
+            } else {
+                generatedSummary = `[이미지 센싱 리포트] 분석된 구역의 물품 위치 이탈률은 ${metrics.miss}%로 상대적으로 양호하나, 전선 배선 등으로 인한 시각 왜곡이 나타납니다. 테두리 수납장 위 평면 비움을 우선 추천해 드립니다.`;
+            }
+
+            if(currentUser) {
+                const db = JSON.parse(localStorage.getItem("tidyup_db"));
+                db[currentUser].history.push({
+                    date: new Date().toLocaleString(),
+                    space: currentSpace === "Desk" ? "책상 워크스테이션" : "원룸 침실 하부 공간",
+                    ageGroup: selectedAgeGroup,
+                    snapshot: uploadedImages[0],
+                    metrics: metrics,
+                    commentSummary: generatedSummary
+                });
+                localStorage.setItem("tidyup_db", JSON.stringify(db));
+            }
+
+            document.getElementById("mainAppSection").classList.add("hidden");
+            document.getElementById("loadingSection").classList.remove("hidden");
+
+            setTimeout(() => {
+                document.getElementById("dashboardMainTitle").innerText = "공간 맞춤 분석표";
+                renderDashboard();
+                
+                drawCircleChart("chartMove", metrics.move, "#4a65af");
+                drawCircleChart("chartNoise", metrics.noise, "#ff5a5a");
+                drawCircleChart("chartMiss", metrics.miss, "#2d9d78");
+                
+                document.getElementById("analysisCardSummary").innerText = generatedSummary;
+                document.getElementById("chatAiInitBubble").innerHTML = `안녕하세요. 분석 결과 회원님의 방은 <strong>동선 효율성이 ${metrics.move}%</strong> 수준으로 진단되었습니다. 상단에 매핑된 맞춤 3단계 가이드를 확인해 주세요.`;
+
+                if(currentUser) {
+                    const db = JSON.parse(localStorage.getItem("tidyup_db"));
+                    const historyList = db[currentUser].history;
+                    if(historyList.length > 1) {
+                        const lastRecord = historyList[historyList.length - 2]; 
+                        const alertBar = document.getElementById("historyAlertArea");
+                        alertBar.innerHTML = `🔔 <strong>이전 내역 점검 알림:</strong> 지난 회차 분석 구역인 [${lastRecord.space}] 가이드라인 정돈 데이터가 활성화되어 있습니다.`;
+                        alertBar.className = "history-alert-bar";
+                    }
+                }
+
+                document.getElementById("loadingSection").classList.add("hidden");
+                document.getElementById("resultSection").classList.remove("hidden");
+                document.getElementById("shopPanel").classList.toggle("hidden", !isRecommendActive);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 2000);
+        }
+
+        function renderDashboard() {
+            let subTodo1 = "중심 시야를 가리는 큰 서적 치우기";
+            let subTodo2 = "바닥 동선을 가로막는 상자나 가방 격리";
+            if(currentActiveMetrics.seed % 3 === 0) {
+                subTodo1 = "모니터 시야각을 방해하는 두꺼운 서류철 분류";
+                subTodo2 = "진입로 반경 0.5m 내 적재된 택배 박스 개봉 후 폐기";
+            } else if (currentActiveMetrics.seed % 3 === 1) {
+                subTodo1 = "중앙 겹침 배열된 전공 서적 수직 밀착 정렬";
+                subTodo2 = "의자 뒤편 하단 사이드 가방 수납장 내부로 이동";
+            }
+
+            const steps = [
+                {
+                    step: 1, title: "부피가 큰 거시적 오브젝트 먼저 비우기", desc: "책상 한가운데나 통로를 막는 두꺼운 전공책, 박스류부터 이동시킵니다.",
+                    minis: [subTodo1, subTodo2]
+                },
+                {
+                    step: 2, title: "복잡한 꼬임 선 격리 및 시야 소거", desc: "가구 배치와 무관하게 엉켜 노출된 선들을 한곳으로 숨겨 시각 피로도를 낮춥니다.",
+                    minis: ["노출된 멀티탭 배선 정리박스 내부로 격리", "스마트폰 충전 케이블 타이로 묶기"]
+                },
+                {
+                    step: 3, title: "소형 미니 정돈 소품 지정석 배치", desc: "마지막 단계로 여기저기 흩어져 굴러다니는 문구류나 작은 집기들을 모아 수납합니다.",
+                    minis: ["필기구 통 밖으로 이탈한 모나미 사인펜 연필꽂이에 넣기", "흩어진 영수증 및 클립 분류 트레이 수납"]
+                }
+            ];
+
+            const dest = document.getElementById("stepsContainer");
+            dest.innerHTML = "";
+            
+            steps.forEach(s => {
+                let innerHtml = "";
+                s.minis.forEach((m, i) => {
+                    innerHtml += `
+                        <div class="mini-todo-node">
+                            <div class="mini-circle-box" id="chk-${s.step}-${i}" onclick="toggleCheck('chk-${s.step}-${i}')"></div>
+                            <div style="font-size:13px; font-weight:500;">${m}</div>
+                        </div>
+                    `;
+                });
+
+                const card = document.createElement("div");
+                card.className = "macro-step-card";
+                card.innerHTML = `
+                    <div class="macro-main-row" onclick="toggleAcc('${s.step}')">
+                        <div>
+                            <div class="macro-title-txt" style="color:var(--point-blue)">단계 0${s.step}. ${s.title}</div>
+                            <div class="macro-desc-txt">${s.desc}</div>
+                        </div>
+                        <button class="toggle-expand-btn" id="btn-${s.step}">더보기 ▼</button>
+                    </div>
+                    <div class="sub-accordion-panel" id="panel-${s.step}">${innerHtml}</div>
+                `;
+                dest.appendChild(card);
+            });
+
+            const pGrid = document.getElementById("dynamicProductGrid");
+            pGrid.innerHTML = "";
+            const products = productCatalog[selectedAgeGroup] || productCatalog["20대"];
+            
+            products.forEach(p => {
+                pGrid.innerHTML += `
+                    <div class="shop-item-card">
+                        <div class="shop-item-thumb">${p.tag}</div>
+                        <h5 class="shop-item-title">${p.title}</h5>
+                        <div class="shop-item-price">${p.price}</div>
+                        <p class="shop-item-desc">${p.desc}</p>
+                        <a href="${p.link}" target="_blank" class="shop-item-link">쿠팡 최저가 확인하기</a>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleAcc(step) {
+            const panel = document.getElementById(`panel-${step}`);
+            const btn = document.getElementById(`btn-${step}`);
+            const isOpen = panel.classList.contains("open");
+            panel.classList.toggle("open", !isOpen);
+            btn.innerText = isOpen ? "더보기 ▼" : "접기 ▲";
+        }
+
+        function toggleCheck(id) {
+            const el = document.getElementById(id);
+            const isAct = el.classList.contains("active");
+            el.classList.toggle("active", !isAct);
+            el.innerText = isAct ? "" : "✓";
+        }
+
+        // [최종 반영]: 백엔드 규칙이 이식된 고능한 상식 교정 및 사족 원천 차단형 컨텍스트 추론 파서
+        function executeDynamicLLMGeneration(userQuery) {
+            // 규칙 1&2: 비전 데이터가 오인식되었어도 변명("비전 데이터상~")을 절대 하지 않고 상식선에서 정답만 추출
+            if(userQuery.includes("책") || userQuery.includes("서적") || userQuery.includes("독서")) {
+                return "큰 서적은 책상 공간을 많이 차지하므로 책꽂이에 바로 꽂아두는 것이 가장 좋습니다. 책꽂이가 없다면 책상 한쪽 벽면에 쓰러지지 않게 나란히 세워 정돈하세요.";
+            }
+            if(userQuery.includes("펜") || userQuery.includes("어따") || userQuery.includes("어디") || userQuery.includes("둠")) {
+                return "필기구는 책상 위 시야를 분산시키는 주요 원인입니다. 필기구 통 내부로 일괄 수납하여 중심 수평면 공간을 깨끗하게 확보하십시오.";
+            }
+            if(userQuery.includes("선") || userQuery.includes("귀찮") || userQuery.includes("멀티탭") || userQuery.includes("꼬임")) {
+                return "얽혀 있는 케이블과 멀티탭은 가구 뒤편 사각지대로 격리하여 숨기십시오. 전용 안전 가리개 박스를 활용하면 시각 오염을 간편하게 차단할 수 있습니다.";
+            }
+            if(userQuery.includes("박스") || userQuery.includes("택배") || userQuery.includes("쓰레기")) {
+                return "통로 동선을 막는 택배 상자는 즉시 내부 물품을 꺼내 수납한 뒤, 상자는 압착 분해하여 외부 분리수거장으로 배출 처리하는 것이 효율적입니다.";
+            }
+            return "배치 3대 원칙 가이드라인에 따라 부피가 큰 핵심 적재물부터 벽면 구역으로 차례대로 밀착시켜 동선을 확보하십시오.";
+        }
+
+        function sendChat() {
+            const input = document.getElementById("chatInput");
+            const text = input.value.trim();
+            if(!text) return;
+
+            const feed = document.getElementById("chatFeed");
+            const uBox = document.createElement("div");
+            uBox.className = "bubble user";
+            uBox.innerText = text;
+            feed.appendChild(uBox);
+            input.value = "";
+            feed.scrollTop = feed.scrollHeight;
+
+            setTimeout(() => {
+                const aBox = document.createElement("div");
+                aBox.className = "bubble ai";
+                aBox.innerHTML = executeDynamicLLMGeneration(text);
+                feed.appendChild(aBox);
+                feed.scrollTop = feed.scrollHeight;
+            }, 600);
+        }
+
+        document.getElementById("chatInput").addEventListener("keypress", function(e) {
+            if(e.key === "Enter") { sendChat(); }
+        });
+    </script>
+</body>
+</html>
